@@ -1,8 +1,9 @@
+require("dotenv").config(); // level 3 - require the "environment variable" package
 const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption"); // level 2 - require the encription package.
+const encrypt = require("mongoose-encryption");
 
 const app = express();
 app.use(express.static("public"));
@@ -14,14 +15,13 @@ app.use(
 );
 
 mongoose.connect("mongodb://localhost:27017/userDB", { useNewUrlParser: true });
-// level 2- change userSchema from a regular JS object to an object created from mongoose class.
 const userSchema = new mongoose.Schema({
 	email: String,
 	password: String,
 });
 
-// level 2 - we will use a Secret String Instead of Two Keys
-const secret = "ThisIsOurLittleSecret.";
+// level 3 - recieve the "secret key" value from our environment variable (that in .env file)
+const secret = process.env.SECRET;
 userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
 
 const User = new mongoose.model("User", userSchema);

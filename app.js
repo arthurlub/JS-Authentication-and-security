@@ -2,6 +2,7 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption"); // level 2 - require the encription package.
 
 const app = express();
 app.use(express.static("public"));
@@ -13,12 +14,16 @@ app.use(
 );
 
 mongoose.connect("mongodb://localhost:27017/userDB", { useNewUrlParser: true });
-// mongoose Users schema (table)
-const userSchema = {
+// level 2- change userSchema from a regular JS object to an object created from mongoose class.
+const userSchema = new mongoose.Schema({
 	email: String,
 	password: String,
-};
-// mongoose User model (this is actually a js object that used to: represent a row in the table/ find a row in a table....)
+});
+
+// level 2 - we will use a Secret String Instead of Two Keys
+const secret = "ThisIsOurLittleSecret.";
+userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
+
 const User = new mongoose.model("User", userSchema);
 
 app.get("/", function (req, res) {
@@ -33,7 +38,6 @@ app.get("/register", function (req, res) {
 	res.render("register");
 });
 
-// when the user registered it will send the user and the password values to here
 app.post("/register", function (req, res) {
 	const newUser = new User({
 		email: req.body.username,
@@ -43,7 +47,7 @@ app.post("/register", function (req, res) {
 		if (err) {
 			console.log(err);
 		} else {
-			res.render("secrets"); // this will show me secret page, but will not redirect me to a new route!!! it will be on the this route (http://localhost:3000/register)
+			res.render("secrets");
 		}
 	});
 });
@@ -51,14 +55,13 @@ app.post("/register", function (req, res) {
 app.post("/login", function (req, res) {
 	const username = req.body.username;
 	const password = req.body.password;
-	// we will check in our db if there is a user name with this password
 	User.findOne({ email: username }, function (err, foundUser) {
 		if (err) {
 			console.log(err);
 		} else {
 			if (foundUser) {
 				if (foundUser.password === password) {
-					res.render("secrets"); // if so, we will render him the secret page (on the same route - http://localhost:3000/login)
+					res.render("secrets");
 				}
 			}
 		}
